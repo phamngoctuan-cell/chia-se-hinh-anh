@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="vi" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LUMEN | Bộ Sưu Tập Nhiếp Ảnh Nghệ Thuật</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;1,400&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                    },
+                    colors: {
+                        brand: {
+                            500: '#f59e0b',
+                            600: '#d97706',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Tùy chỉnh thanh cuộn và hiệu ứng mượt mà */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(156, 163, 175, 0.4);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(156, 163, 175, 0.7);
+        }
+        .masonry-grid {
+            column-count: 1;
+            column-gap: 1.5rem;
+        }
+        @media (min-width: 640px) {
+            .masonry-grid { column-count: 2; }
+        }
+        @media (min-width: 1024px) {
+            .masonry-grid { column-count: 3; }
+        }
+        .masonry-item {
+            break-inside: avoid;
+            margin-bottom: 1.5rem;
+        }
+        .photo-card:hover .photo-overlay {
+            opacity: 1;
+        }
+        .photo-card:hover img {
+            transform: scale(1.04);
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="bg-stone-50 text-stone-900 dark:bg-neutral-950 dark:text-stone-100 font-sans transition-colors duration-300 min-h-screen flex flex-col selection:bg-amber-500 selection:text-white">
+
+    <header class="sticky top-0 z-30 backdrop-blur-md bg-stone-50/80 dark:bg-neutral-950/80 border-b border-stone-200 dark:border-neutral-800 transition-colors duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
+            <!-- Logo -->
+            <a href="#" class="flex items-center gap-3 group">
+                <div class="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center text-neutral-950 font-bold text-xl shadow-lg shadow-amber-500/20 group-hover:rotate-6 transition-transform">
+                    <i class="ph-fill ph-aperture text-2xl"></i>
+                </div>
+                <div>
+                    <span class="font-serif text-2xl font-bold tracking-tight block leading-none">LUMEN</span>
+                    <span class="text-[11px] uppercase tracking-widest text-stone-500 dark:text-neutral-400 block mt-0.5">Visual Stories</span>
+                </div>
+            </a>
+
+            <!-- Thanh tìm kiếm (Desktop) -->
+            <div class="hidden md:flex items-center flex-1 max-w-md mx-8">
+                <div class="relative w-full">
+                    <i class="ph ph-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400 text-lg"></i>
+                    <input 
+                        type="text" 
+                        id="searchInput"
+                        placeholder="Tìm theo tên ảnh, địa điểm, cảm xúc..." 
+                        class="w-full pl-11 pr-4 py-2.5 rounded-full bg-stone-200/70 dark:bg-neutral-900 border border-transparent focus:border-amber-500/50 focus:bg-white dark:focus:bg-neutral-900 focus:outline-none text-sm transition-all"
+                    >
+                    <button id="clearSearchBtn" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 dark:hover:text-stone-200">
+                        <i class="ph-fill ph-x-circle"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Nút chức năng -->
+            <div class="flex items-center gap-2 sm:gap-3">
+                <button onclick="openUploadModal()" class="flex items-center gap-2 px-4 py-2.5 rounded-full bg-amber-500 hover:bg-amber-600 text-neutral-950 font-medium text-sm transition-all shadow-md shadow-amber-500/10 active:scale-95">
+                    <i class="ph-bold ph-plus text-base"></i>
+                    <span class="hidden sm:inline">Thêm ảnh</span>
+                </button>
+
+                <button id="layoutToggleBtn" onclick="toggleLayout()" title="Đổi kiểu hiển thị" class="p-2.5 rounded-full bg-stone-200/70 dark:bg-neutral-900 hover:bg-stone-300/70 dark:hover:bg-neutral-800 text-stone-700 dark:text-stone-300 transition-colors">
+                    <i id="layoutIcon" class="ph ph-squares-four text-xl"></i>
+                </button>
+
+                <button id="themeToggleBtn" onclick="toggleTheme()" title="Đổi giao diện Sáng/Tối" class="p-2.5 rounded-full bg-stone-200/70 dark:bg-neutral-900 hover:bg-stone-300/70 dark:hover:bg-neutral-800 text-stone-700 dark:text-stone-300 transition-colors">
+                    <i id="themeIcon" class="ph ph-sun text-xl"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Thanh tìm kiếm (Mobile) -->
+        <div class="md:hidden px-4 pb-3">
+            <div class="relative w-full">
+                <i class="ph ph-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400 text-lg"></i>
+                <input 
+                    type="text" 
+                    id="mobileSearchInput"
+                    placeholder="Tìm kiếm ảnh, địa điểm..." 
+                    class="w-full pl-10 pr-4 py-2 rounded-full bg-stone-200/70 dark:bg-neutral-900 border border-transparent focus:border-amber-500/50 focus:outline-none text-sm"
+                >
+            </div>
+        </div>
+    </header>
+
+    <section class="relative overflow-hidden py-10 sm:py-14 border-b border-stone-200/60 dark:border-neutral-900">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                <div class="max-w-2xl">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-medium mb-4 border border-amber-500/20">
+                        <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                        Góc nhìn qua ống kính cá nhân
+                    </div>
+                    <h1 class="font-serif text-3xl sm:text-5xl font-normal tracking-tight text-stone-900 dark:text-white leading-tight">
+                        Lưu giữ những <span class="italic text-amber-500">khoảnh khắc</span> bình dị & nghệ thuật.
+                    </h1>
+                    <p class="mt-3 text-stone-600 dark:text-neutral-400 text-base sm:text-lg leading-relaxed">
+                        Mỗi bức ảnh là một câu chuyện về ánh sáng, con người và những chuyến đi. Nhấn vào từng tác phẩm để xem chi tiết thông số kỹ thuật và câu chuyện đằng sau.
+                    </p>
+                </div>
+
+                <!-- Thống kê nhanh -->
+                <div class="flex items-center gap-6 sm:gap-8 bg-white dark:bg-neutral-900/90 p-4 sm:px-6 sm:py-4 rounded-2xl border border-stone-200/80 dark:border-neutral-800 shadow-sm self-start md:self-auto">
+                    <div>
+                        <span id="statTotalPhotos" class="block text-2xl sm:text-3xl font-bold text-stone-900 dark:text-white">12</span>
+                        <span class="text-xs text-stone-500 dark:text-neutral-400">Tác phẩm</span>
+                    </div>
+                    <div class="h-8 w-px bg-stone-200 dark:bg-neutral-800"></div>
+                    <div>
+                        <span id="statTotalLikes" class="block text-2xl sm:text-3xl font-bold text-amber-500">348</span>
+                        <span class="text-xs text-stone-500 dark:text-neutral-400">Yêu thích</span>
+                    </div>
+                    <div class="h-8 w-px bg-stone-200 dark:bg-neutral-800"></div>
+                    <div>
+                        <span class="block text-2xl sm:text-3xl font-bold text-stone-900 dark:text-white">5</span>
+                        <span class="text-xs text-stone-500 dark:text-neutral-400">Chủ đề</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-8 flex items-center justify-between gap-4 flex-wrap">
+                <div id="categoryFilters" class="flex items-center gap-2 overflow-x-auto pb-2 sm:pb-0 no-scrollbar">
+                    <button data-category="all" class="filter-btn active px-4 py-2 rounded-full text-sm font-medium transition-all bg-stone-900 text-white dark:bg-white dark:text-neutral-950 shadow-sm">
+                        Tất cả
+                    </button>
+                    <button data-category="Thiên nhiên" class="filter-btn px-4 py-2 rounded-full text-sm font-medium transition-all bg-stone-200/70 dark:bg-neutral-900 text-stone-700 dark:text-neutral-300 hover:bg-stone-300/70 dark:hover:bg-neutral-800">
+                        🌿 Thiên nhiên
+                    </button>
+                    <button data-category="Đời thường" class="filter-btn px-4 py-2 rounded-full text-sm font-medium transition-all bg-stone-200/70 dark:bg-neutral-900 text-stone-700 dark:text-neutral-300 hover:bg-stone-300/70 dark:hover:bg-neutral-800">
+                        ☕ Đời thường
+                    </button>
+                    <button data-category="Chân dung" class="filter-btn px-4 py-2 rounded-full text-sm font-medium transition-all bg-stone-200/70 dark:bg-neutral-900 text-stone-700 dark:text-neutral-300 hover:bg-stone-300/70 dark:hover:bg-neutral-800">
+                        👤 Chân dung
+                    </button>
+                    <button data-category="Kiến trúc" class="filter-btn px-4 py-2 rounded-full text-sm font-medium transition-all bg-stone-200/70 dark:bg-neutral-900 text-stone-700 dark:text-neutral-300 hover:bg-stone-300/70 dark:hover:bg-neutral-800">
+                        🏛️ Kiến trúc
+                    </button>
+                    <button data-category="Du lịch" class="filter-btn px-4 py-2 rounded-full text-sm font-medium transition-all bg-stone-200/70 dark:bg-neutral-900 text-stone-700 dark:text-neutral-300 hover:bg-stone-300/70 dark:hover:bg-neutral-800">
+                        ✈️ Du lịch
+                    </button>
+                    <button data-category="favorites" class="filter-btn px-4 py-2 rounded-full text-sm font-medium transition-all bg-stone-200/70 dark:bg-neutral-900 text-rose-500 hover:bg-stone-300/70 dark:hover:bg-neutral-800 flex items-center gap-1.5">
+                        <i class="ph-fill ph-heart"></i> Đã thích
+                    </button>
+                </div>
+
+                <!-- Sắp xếp -->
+                <div class="flex items-center gap-2 ml-auto">
+                    <span class="text-xs text-stone-500 dark:text-neutral-400">Sắp xếp:</span>
+                    <select id="sortSelect" onchange="renderGallery()" class="bg-stone-200/70 dark:bg-neutral-900 text-stone-800 dark:text-stone-200 text-xs font-medium rounded-xl px-3 py-2 border border-transparent focus:border-amber-500 focus:outline-none cursor-pointer">
+                        <option value="newest">Mới nhất</option>
+                        <option value="popular">Nhiều lượt thích</option>
+                        <option value="title">Tên (A - Z)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Lưới hiển thị ảnh -->
+        <div id="galleryContainer" class="masonry-grid">
+            <!-- Các thẻ ảnh sẽ được render bằng JavaScript -->
+        </div>
+
+        <!-- Trạng thái trống khi không tìm thấy ảnh -->
+        <div id="emptyState" class="hidden py-20 text-center">
+            <div class="w-16 h-16 rounded-full bg-stone-200 dark:bg-neutral-900 flex items-center justify-center mx-auto mb-4 text-stone-400">
+                <i class="ph ph-image-broken text-3xl"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-stone-800 dark:text-stone-200">Không tìm thấy bức ảnh nào</h3>
+            <p class="text-sm text-stone-500 dark:text-neutral-400 mt-1 max-w-md mx-auto">
+                Hãy thử thay đổi từ khóa tìm kiếm hoặc chọn một danh mục khác xem sao nhé.
+            </p>
+            <button onclick="resetFilters()" class="mt-5 px-5 py-2.5 rounded-full bg-amber-500 text-neutral-950 font-medium text-sm hover:bg-amber-600 transition-all">
+                Xem tất cả ảnh
+            </button>
+        </div>
+    </main>
+
+    <div id="lightboxModal" class="fixed inset-0 z-50 hidden bg-black/95 backdrop-blur-lg flex flex-col lg:flex-row transition-opacity duration-300">
+        <!-- Nút đóng & điều hướng trên cùng -->
+        <div class="absolute top-4 right-4 z-20 flex items-center gap-2">
+            <button onclick="toggleSlideshow()" id="slideshowBtn" class="px-3.5 py-2 rounded-full bg-neutral-800/80 hover:bg-neutral-700 text-white text-xs font-medium flex items-center gap-1.5 backdrop-blur-md transition-colors">
+                <i id="slideshowIcon" class="ph-fill ph-play"></i>
+                <span id="slideshowText">Trình chiếu</span>
+            </button>
+            <button onclick="closeLightbox()" class="p-2.5 rounded-full bg-neutral-800/80 hover:bg-neutral-700 text-white transition-colors" title="Đóng (Esc)">
+                <i class="ph ph-x text-xl"></i>
+            </button>
+        </div>
+
+        <!-- Khung ảnh bên trái/chính giữa -->
+        <div class="relative flex-1 flex items-center justify-center p-4 sm:p-8 select-none overflow-hidden min-h-[55vh]">
+            <!-- Nút Lùi -->
+            <button onclick="navigateLightbox(-1)" class="absolute left-4 z-10 p-3 rounded-full bg-neutral-900/70 hover:bg-amber-500 hover:text-neutral-950 text-white transition-all shadow-lg">
+                <i class="ph-bold ph-caret-left text-xl"></i>
+            </button>
+
+            <img id="lightboxImg" src="" alt="" class="max-h-[82vh] max-w-full object-contain rounded-lg shadow-2xl transition-all duration-300">
+
+            <!-- Nút Tiến -->
+            <button onclick="navigateLightbox(1)" class="absolute right-4 z-10 p-3 rounded-full bg-neutral-900/70 hover:bg-amber-500 hover:text-neutral-950 text-white transition-all shadow-lg">
+                <i class="ph-bold ph-caret-right text-xl"></i>
+            </button>
+        </div>
+
+        <!-- Thanh thông tin chi tiết bên phải -->
+        <div class="w-full lg:w-96 bg-neutral-900/95 border-t lg:border-t-0 lg:border-l border-neutral-800 p-6 flex flex-col justify-between overflow-y-auto max-h-[45vh] lg:max-h-full text-stone-100">
+            <div>
+                <div class="flex items-center justify-between gap-2 mb-3">
+                    <span id="lightboxCategory" class="px-3 py-1 rounded-full bg-amber-500/20 text-amber-400 text-xs font-medium">Thiên nhiên</span>
+                    <span id="lightboxDate" class="text-xs text-neutral-400">12 Tháng 10, 2024</span>
+                </div>
+
+                <h2 id="lightboxTitle" class="font-serif text-2xl font-bold text-white mb-2">Tiêu đề bức ảnh</h2>
+                
+                <div class="flex items-center gap-1.5 text-neutral-400 text-xs mb-4">
+                    <i class="ph-fill ph-map-pin text-amber-500"></i>
+                    <span id="lightboxLocation">Đà Lạt, Việt Nam</span>
+                </div>
+
+                <p id="lightboxDesc" class="text-sm text-neutral-300 leading-relaxed mb-6 pb-6 border-b border-neutral-800">
+                    Mô tả chi tiết câu chuyện đằng sau bức ảnh.
+                </p>
+
+                <!-- Thông số máy ảnh (EXIF) -->
+                <div>
+                    <h4 class="text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-3 flex items-center gap-1.5">
+                        <i class="ph ph-camera text-amber-500 text-base"></i> Thông số chụp (EXIF)
+                    </h4>
+                    <div class="grid grid-cols-2 gap-3 bg-neutral-950/80 p-4 rounded-2xl border border-neutral-800/80 text-xs">
+                        <div>
+                            <span class="text-neutral-500 block">Máy ảnh</span>
+                            <span id="exifCamera" class="font-medium text-stone-200 mt-0.5 block">Sony A7 IV</span>
+                        </div>
+                        <div>
+                            <span class="text-neutral-500 block">Ống kính</span>
+                            <span id="exifLens" class="font-medium text-stone-200 mt-0.5 block">35mm f/1.4 GM</span>
+                        </div>
+                        <div>
+                            <span class="text-neutral-500 block">Khẩu độ & Tốc độ</span>
+                            <span id="exifSettings" class="font-medium text-stone-200 mt-0.5 block">f/2.8 • 1/250s</span>
+                        </div>
+                        <div>
+                            <span class="text-neutral-500 block">ISO</span>
+                            <span id="exifIso" class="font-medium text-stone-200 mt-0.5 block">ISO 100</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tương tác dưới cùng -->
+            <div class="mt-6 pt-4 border-t border-neutral-800 flex items-center justify-between gap-3">
+                <button id="lightboxLikeBtn" onclick="toggleLikeCurrentLightbox()" class="flex-1 py-2.5 px-4 rounded-xl bg-neutral-800 hover:bg-neutral-700 flex items-center justify-center gap-2 text-sm font-medium transition-colors">
+                    <i id="lightboxLikeIcon" class="ph-fill ph-heart text-lg text-rose-500"></i>
+                    <span id="lightboxLikesCount">42</span>
+                </button>
+                <button onclick="copyPhotoLink()" class="py-2.5 px-4 rounded-xl bg-neutral-800 hover:bg-neutral-700 flex items-center justify-center gap-2 text-sm font-medium transition-colors">
+                    <i class="ph ph-share-network text-lg"></i>
+                    <span>Chia sẻ</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="uploadModal" class="fixed inset-0 z-50 hidden bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-neutral-900 border border-stone-200 dark:border-neutral-800 rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl animate-fade-in max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between pb-4 border-b border-stone-200 dark:border-neutral-800">
+                <h3 class="font-serif text-2xl font-bold">Thêm tác phẩm mới</h3>
+                <button onclick="closeUploadModal()" class="p-2 rounded-full hover:bg-stone-100 dark:hover:bg-neutral-800 text-stone-500">
+                    <i class="ph ph-x text-xl"></i>
+                </button>
+            </div>
+
+            <form id="uploadForm" onsubmit="handleAddPhoto(event)" class="mt-5 space-y-4">
+                <!-- Chọn file hoặc dán link ảnh -->
+                <div>
+                    <label class="block text-xs font-medium uppercase tracking-wider text-stone-500 dark:text-neutral-400 mb-2">Hình ảnh của bạn *</label>
+                    <div class="grid grid-cols-1 gap-3">
+                        <label class="cursor-pointer flex flex-col items-center justify-center p-5 border-2 border-dashed border-stone-300 dark:border-neutral-700 rounded-2xl hover:border-amber-500 transition-colors bg-stone-50 dark:bg-neutral-950/50 text-center">
+                            <i class="ph ph-upload-simple text-3xl text-amber-500 mb-1"></i>
+                            <span class="text-sm font-medium">Tải ảnh từ thiết bị lên</span>
+                            <span class="text-xs text-stone-400 mt-0.5">Hỗ trợ JPG, PNG, WEBP</span>
+                            <input type="file" id="photoFileInput" accept="image/*" class="hidden" onchange="previewUploadedFile(event)">
+                        </label>
+                        <div class="text-center text-xs text-stone-400">hoặc dán đường dẫn (URL) ảnh</div>
+                        <input type="url" id="photoUrlInput" placeholder="https://images.unsplash.com/..." class="w-full px-4 py-2.5 rounded-xl bg-stone-100 dark:bg-neutral-800 border border-transparent focus:border-amber-500 focus:outline-none text-sm">
+                    </div>
+                    <!-- Khung xem trước ảnh -->
+                    <div id="uploadPreviewContainer" class="hidden mt-3 relative rounded-xl overflow-hidden max-h-44 bg-neutral-950 flex justify-center">
+                        <img id="uploadPreviewImg" src="" alt="Preview" class="h-44 object-contain">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-stone-600 dark:text-neutral-400 mb-1">Tên tác phẩm *</label>
+                        <input type="text" id="photoTitleInput" required placeholder="VD: Bình minh trên biển" class="w-full px-4 py-2.5 rounded-xl bg-stone-100 dark:bg-neutral-800 border border-transparent focus:border-amber-500 focus:outline-none text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-stone-600 dark:text-neutral-400 mb-1">Chủ đề *</label>
+                        <select id="photoCategoryInput" class="w-full px-4 py-2.5 rounded-xl bg-stone-100 dark:bg-neutral-800 border border-transparent focus:border-amber-500 focus:outline-none text-sm">
+                            <option value="Thiên nhiên">Thiên nhiên</option>
+                            <option value="Đời thường">Đời thường</option>
+                            <option value="Chân dung">Chân dung</option>
+                            <option value="Kiến trúc">Kiến trúc</option>
+                            <option value="Du lịch">Du lịch</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-stone-600 dark:text-neutral-400 mb-1">Địa điểm chụp</label>
+                        <input type="text" id="photoLocationInput" placeholder="VD: Hà Nội, Việt Nam" class="w-full px-4 py-2.5 rounded-xl bg-stone-100 dark:bg-neutral-800 border border-transparent focus:border-amber-500 focus:outline-none text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-stone-600 dark:text-neutral-400 mb-1">Thiết bị / Máy ảnh</label>
+                        <input type="text" id="photoCameraInput" placeholder="VD: Fujifilm X-T5 / iPhone 15 Pro" class="w-full px-4 py-2.5 rounded-xl bg-stone-100 dark:bg-neutral-800 border border-transparent focus:border-amber-500 focus:outline-none text-sm">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-stone-600 dark:text-neutral-400 mb-1">Câu chuyện / Mô tả bức ảnh</label>
+                    <textarea id="photoDescInput" rows="3" placeholder="Chia sẻ khoảnh khắc hoặc cảm xúc khi bạn bấm máy..." class="w-full px-4 py-2.5 rounded-xl bg-stone-100 dark:bg-neutral-800 border border-transparent focus:border-amber-500 focus:outline-none text-sm"></textarea>
+                </div>
+
+                <div class="pt-3 flex items-center justify-end gap-3">
+                    <button type="button" onclick="closeUploadModal()" class="px-5 py-2.5 rounded-full text-sm font-medium text-stone-600 dark:text-neutral-400 hover:bg-stone-100 dark:hover:bg-neutral-800">
+                        Hủy
+                    </button>
+                    <button type="submit" class="px-6 py-2.5 rounded-full text-sm font-semibold bg-amber-500 hover:bg-amber-600 text-neutral-950 shadow-lg shadow-amber-500/20 transition-all">
+                        Đăng lên bộ sưu tập
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Thông báo Toast -->
+    <div id="toastNotification" class="fixed bottom-6 right-6 z-50 hidden items-center gap-3 px-5 py-3.5 rounded-2xl bg-stone-900 dark:bg-white text-white dark:text-neutral-950 shadow-xl text-sm font-medium transition-all">
+        <i class="ph-fill ph-check-circle text-amber-500 text-xl"></i>
+        <span id="toastMessage">Thao tác thành công!</span>
+    </div>
+
+    <!-- Footer -->
+    <footer class="border-t border-stone-200 dark:border-neutral-900 py-8 mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-stone-500 dark:text-neutral-500">
+            <div class="flex items-center gap-2">
+                <i class="ph-fill ph-aperture text-amber-500 text-lg"></i>
+                <span class="font-serif font-bold text-stone-800 dark:text-stone-300">LUMEN PORTFOLIO</span>
+                <span>— Lưu giữ khoảnh khắc bằng ánh sáng.</span>
+            </div>
+            <div class="flex items-center gap-5">
+                <span>Mẹo: Dùng phím <kbd class="px-1.5 py-0.5 rounded bg-stone-200 dark:bg-neutral-800 text-stone-700 dark:text-stone-300">←</kbd> <kbd class="px-1.5 py-0.5 rounded bg-stone-200 dark:bg-neutral-800 text-stone-700 dark:text-stone-300">→</kbd> khi đang mở ảnh lớn</span>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const initialPhotos = [
+            {
+                id: 1,
+                title: "Sương Sớm Trên Đồi Chè Cầu Đất",
+                category: "Thiên nhiên",
+                location: "Đà Lạt, Lâm Đồng",
+                date: "15 Tháng 11, 2024",
+                url: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=85",
+                description: "Khoảnh khắc những tia nắng đầu tiên xuyên qua lớp sương mù dày đặc phủ kín đồi chè xanh mướt lúc 5 giờ 30 sáng.",
+                camera: "Sony A7R IV",
+                lens: "FE 24-70mm f/2.8 GM",
+                settings: "f/8.0 • 1/125s",
+                iso: "ISO 100",
+                likes: 64,
+                liked: true
+            },
+            {
+                id: 2,
+                title: "Góc Phố Cổ Chiều Thu",
+                category: "Đời thường",
+                location: "Hoàn Kiếm, Hà Nội",
+                date: "02 Tháng 10, 2024",
+                url: "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=1000&q=85",
+                description: "Nhịp sống chậm rãi nơi góc phố nhỏ với ánh nắng vàng dịu đặc trưng của mùa thu Hà Nội.",
+                camera: "Fujifilm X-T5",
+                lens: "XF 35mm f/1.4 R",
+                settings: "f/2.0 • 1/500s",
+                iso: "ISO 160",
+                likes: 48,
+                liked: false
+            },
+            {
+                id: 3,
+                title: "Đường Cong Kiến Trúc Đương Đại",
+                category: "Kiến trúc",
+                location: "Quận 1, TP. Hồ Chí Minh",
+                date: "20 Tháng 09, 2024",
+                url: "https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=1000&q=85",
+                description: "Sự giao thoa giữa ánh sáng tự nhiên và những mảng tường bê tông tối giản tạo nên chiều sâu thị giác độc đáo.",
+                camera: "Leica Q2",
+                lens: "Summilux 28mm f/1.7",
+                settings: "f/5.6 • 1/400s",
+                iso: "ISO 200",
+                likes: 39,
+                liked: false
+            },
+            {
+                id: 4,
+                title: "Ánh Nhìn Trong Nắng Chiều",
+                category: "Chân dung",
+                location: "Huế, Việt Nam",
+                date: "14 Tháng 08, 2024",
+                url: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1000&q=85",
+                description: "Chân dung tự nhiên tận dụng ánh sáng ngược (backlight) lúc hoàng hôn làm nổi bật đường nét khuôn mặt.",
+                camera: "Canon EOS R5",
+                lens: "RF 85mm f/1.2L",
+                settings: "f/1.4 • 1/1000s",
+                iso: "ISO 100",
+                likes: 82,
+                liked: true
+            },
+            {
+                id: 5,
+                title: "Hành Trình Qua Những Đỉnh Núi",
+                category: "Du lịch",
+                location: "Hà Giang, Việt Nam",
+                date: "05 Tháng 07, 2024",
+                url: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=85",
+                description: "Cung đường đèo hùng vĩ uốn lượn giữa những dãy núi đá tai mèo trùng điệp vùng cực Bắc.",
+                camera: "Sony A7 IV",
+                lens: "FE 16-35mm f/2.8 GM",
+                settings: "f/11 • 1/200s",
+                iso: "ISO 100",
+                likes: 53,
+                liked: false
+            },
+            {
+                id: 6,
+                title: "Tĩnh Lặng Bên Tách Cà Phê Sáng",
+                category: "Đời thường",
+                location: "Đà Nẵng, Việt Nam",
+                date: "19 Tháng 06, 2024",
+                url: "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1000&q=85",
+                description: "Một buổi sáng yên bình trước khi phố xá bắt đầu nhộn nhịp, hương cà phê rang xay lan tỏa trong không gian ấm cúng.",
+                camera: "Ricoh GR IIIx",
+                lens: "40mm f/2.8",
+                settings: "f/2.8 • 1/60s",
+                iso: "ISO 400",
+                likes: 31,
+                liked: false
+            },
+            {
+                id: 7,
+                title: "Dải Ngân Hà Trên Biển Đêm",
+                category: "Thiên nhiên",
+                location: "Phú Yên, Việt Nam",
+                date: "11 Tháng 05, 2024",
+                url: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=85",
+                description: "Sóng biển dịu êm vỗ bờ cát trắng trong ánh nắng rực rỡ miền nhiệt đới.",
+                camera: "Sony A7S III",
+                lens: "FE 20mm f/1.8 G",
+                settings: "f/4.0 • 1/500s",
+                iso: "ISO 100",
+                likes: 75,
+                liked: true
+            },
+            {
+                id: 8,
+                title: "Đối Xứng Không Gian",
+                category: "Kiến trúc",
+                location: "Tokyo, Nhật Bản",
+                date: "22 Tháng 04, 2024",
+                url: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1000&q=85",
+                description: "Ngước nhìn những tòa nhà chọc trời phủ kính phản chiếu bầu trời xanh thẳm.",
+                camera: "Nikon Z8",
+                lens: "NIKKOR Z 14-24mm f/2.8 S",
+                settings: "f/8.0 • 1/320s",
+                iso: "ISO 64",
+                likes: 44,
+                liked: false
+            },
+            {
+                id: 9,
+                title: "Chuyến Tàu Hoàng Hôn",
+                category: "Du lịch",
+                location: "Hội An, Quảng Nam",
+                date: "09 Tháng 03, 2024",
+                url: "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?auto=format&fit=crop&w=1200&q=85",
+                description: "Mặt nước hồ phẳng lặng phản chiếu sắc trời chiều tà giữa khung cảnh núi non thanh bình.",
+                camera: "Fujifilm X100VI",
+                lens: "23mm f/2.0",
+                settings: "f/4.0 • 1/250s",
+                iso: "ISO 125",
+                likes: 67,
+                liked: false
+            }
+        ];
+
+        let photos = [...initialPhotos];
+        let currentCategory = 'all';
+        let searchQuery = '';
+        let isGridUniform = false;
+        let currentLightboxIndex = 0;
+        let filteredPhotosList = [];
+        let slideshowInterval = null;
+        let uploadedDataUrl = '';
+
+        function renderGallery() {
+            const container = document.getElementById('galleryContainer');
+            const emptyState = document.getElementById('emptyState');
+            const sortBy = document.getElementById('sortSelect').value;
+
+            // Lọc theo danh mục và từ khóa
+            filteredPhotosList = photos.filter(photo => {
+                const matchesCategory = 
+                    currentCategory === 'all' ? true :
+                    currentCategory === 'favorites' ? photo.liked :
+                    photo.category === currentCategory;
+
+                const query = searchQuery.toLowerCase().trim();
+                const matchesSearch = !query || 
+                    photo.title.toLowerCase().includes(query) ||
+                    photo.location.toLowerCase().includes(query) ||
+                    photo.category.toLowerCase().includes(query) ||
+                    photo.description.toLowerCase().includes(query);
+
+                return matchesCategory && matchesSearch;
+            });
+
+            // Sắp xếp
+            if (sortBy === 'popular') {
+                filteredPhotosList.sort((a, b) => b.likes - a.likes);
+            } else if (sortBy === 'title') {
+                filteredPhotosList.sort((a, b) => a.title.localeCompare(b.title, 'vi'));
+            } else {
+                filteredPhotosList.sort((a, b) => b.id - a.id);
+            }
+
+            // Cập nhật thống kê
+            document.getElementById('statTotalPhotos').textContent = photos.length;
+            const totalLikes = photos.reduce((sum, item) => sum + item.likes, 0);
+            document.getElementById('statTotalLikes').textContent = totalLikes;
+
+            if (filteredPhotosList.length === 0) {
+                container.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+
+            // Đổi class khung lưới theo chế độ xem
+            if (isGridUniform) {
+                container.className = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6';
+            } else {
+                container.className = 'masonry-grid';
+            }
+
+            container.innerHTML = filteredPhotosList.map((photo, index) => `
+                <article class="${isGridUniform ? '' : 'masonry-item'} photo-card group relative rounded-2xl overflow-hidden bg-stone-200 dark:bg-neutral-900 border border-stone-200/70 dark:border-neutral-800/80 shadow-sm hover:shadow-xl transition-all duration-300 animate-fade-in cursor-pointer" onclick="openLightbox(${index})">
+                    <div class="overflow-hidden ${isGridUniform ? 'aspect-[4/3]' : ''}">
+                        <img 
+                            src="${photo.url}" 
+                            alt="${photo.title}" 
+                            loading="lazy"
+                            onerror="this.src='https://placehold.co/800x600/1f2937/f59e0b?text=LUMEN+PHOTO'"
+                            class="w-full ${isGridUniform ? 'h-full object-cover' : 'h-auto'} transition-transform duration-500 ease-out"
+                        >
+                    </div>
+
+                    <!-- Lớp phủ thông tin khi di chuột -->
+                    <div class="photo-overlay opacity-0 transition-opacity duration-300 absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent flex flex-col justify-between p-5 text-white">
+                        <div class="flex items-center justify-between">
+                            <span class="px-3 py-1 rounded-full bg-black/50 backdrop-blur-md text-[11px] font-medium tracking-wide border border-white/15">
+                                ${photo.category}
+                            </span>
+                            <button 
+                                onclick="toggleLike(event, ${photo.id})" 
+                                class="w-9 h-9 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center hover:scale-110 transition-transform"
+                                title="Yêu thích"
+                            >
+                                <i class="${photo.liked ? 'ph-fill text-rose-500' : 'ph text-white'} ph-heart text-lg"></i>
+                            </button>
+                        </div>
+
+                        <div>
+                            <div class="flex items-center gap-1 text-amber-400 text-xs mb-1">
+                                <i class="ph-fill ph-map-pin"></i>
+                                <span>${photo.location}</span>
+                            </div>
+                            <h3 class="font-serif text-lg font-bold leading-snug">${photo.title}</h3>
+                            <div class="mt-2 pt-2 border-t border-white/15 flex items-center justify-between text-xs text-stone-300">
+                                <span class="flex items-center gap-1"><i class="ph ph-camera"></i> ${photo.camera}</span>
+                                <span class="flex items-center gap-1"><i class="ph-fill ph-heart text-rose-500"></i> ${photo.likes}</span>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+            `).join('');
+        }
+
+        function toggleLike(event, id) {
+            event.stopPropagation();
+            const photo = photos.find(p => p.id === id);
+            if (photo) {
+                photo.liked = !photo.liked;
+                photo.likes += photo.liked ? 1 : -1;
+                renderGallery();
+                showToast(photo.liked ? 'Đã thêm vào danh sách yêu thích ❤️' : 'Đã bỏ yêu thích');
+            }
+        }
+
+        function resetFilters() {
+            currentCategory = 'all';
+            searchQuery = '';
+            document.getElementById('searchInput').value = '';
+            document.getElementById('mobileSearchInput').value = '';
+            updateCategoryButtons();
+            renderGallery();
+        }
+
+        function updateCategoryButtons() {
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                const cat = btn.getAttribute('data-category');
+                if (cat === currentCategory) {
+                    btn.className = 'filter-btn active px-4 py-2 rounded-full text-sm font-medium transition-all bg-stone-900 text-white dark:bg-white dark:text-neutral-950 shadow-sm flex items-center gap-1.5';
+                } else {
+                    btn.className = 'filter-btn px-4 py-2 rounded-full text-sm font-medium transition-all bg-stone-200/70 dark:bg-neutral-900 text-stone-700 dark:text-neutral-300 hover:bg-stone-300/70 dark:hover:bg-neutral-800 flex items-center gap-1.5';
+                }
+            });
+        }
+
+        function toggleLayout() {
+            isGridUniform = !isGridUniform;
+            const icon = document.getElementById('layoutIcon');
+            icon.className = isGridUniform ? 'ph ph-columns text-xl' : 'ph ph-squares-four text-xl';
+            renderGallery();
+            showToast(isGridUniform ? 'Chế độ lưới đồng đều (Grid)' : 'Chế độ nghệ thuật (Masonry)');
+        }
+
+        function toggleTheme() {
+            const html = document.documentElement;
+            const icon = document.getElementById('themeIcon');
+            html.classList.toggle('dark');
+            if (html.classList.contains('dark')) {
+                icon.className = 'ph ph-sun text-xl';
+            } else {
+                icon.className = 'ph ph-moon text-xl';
+            }
+        }
+
+        function openLightbox(index) {
+            currentLightboxIndex = index;
+            updateLightboxContent();
+            const modal = document.getElementById('lightboxModal');
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeLightbox() {
+            stopSlideshow();
+            const modal = document.getElementById('lightboxModal');
+            modal.classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+
+        function updateLightboxContent() {
+            const photo = filteredPhotosList[currentLightboxIndex];
+            if (!photo) return;
+
+            document.getElementById('lightboxImg').src = photo.url;
+            document.getElementById('lightboxCategory').textContent = photo.category;
+            document.getElementById('lightboxDate').textContent = photo.date;
+            document.getElementById('lightboxTitle').textContent = photo.title;
+            document.getElementById('lightboxLocation').textContent = photo.location;
+            document.getElementById('lightboxDesc').textContent = photo.description;
+            document.getElementById('exifCamera').textContent = photo.camera;
+            document.getElementById('exifLens').textContent = photo.lens;
+            document.getElementById('exifSettings').textContent = photo.settings;
+            document.getElementById('exifIso').textContent = photo.iso;
+            document.getElementById('lightboxLikesCount').textContent = `${photo.likes} Yêu thích`;
+
+            const likeIcon = document.getElementById('lightboxLikeIcon');
+            likeIcon.className = photo.liked 
+                ? 'ph-fill ph-heart text-lg text-rose-500' 
+                : 'ph ph-heart text-lg text-white';
+        }
+
+        function navigateLightbox(direction) {
+            if (filteredPhotosList.length === 0) return;
+            currentLightboxIndex = (currentLightboxIndex + direction + filteredPhotosList.length) % filteredPhotosList.length;
+            updateLightboxContent();
+        }
+
+        function toggleLikeCurrentLightbox() {
+            const photo = filteredPhotosList[currentLightboxIndex];
+            if (!photo) return;
+            photo.liked = !photo.liked;
+            photo.likes += photo.liked ? 1 : -1;
+            updateLightboxContent();
+            renderGallery();
+        }
+
+        function toggleSlideshow() {
+            if (slideshowInterval) {
+                stopSlideshow();
+            } else {
+                document.getElementById('slideshowIcon').className = 'ph-fill ph-pause';
+                document.getElementById('slideshowText').textContent = 'Dừng chiếu';
+                slideshowInterval = setInterval(() => {
+                    navigateLightbox(1);
+                }, 3000);
+            }
+        }
+
+        function stopSlideshow() {
+            if (slideshowInterval) {
+                clearInterval(slideshowInterval);
+                slideshowInterval = null;
+                document.getElementById('slideshowIcon').className = 'ph-fill ph-play';
+                document.getElementById('slideshowText').textContent = 'Trình chiếu';
+            }
+        }
+
+        function copyPhotoLink() {
+            const photo = filteredPhotosList[currentLightboxIndex];
+            if (!photo) return;
+            const dummyInput = document.createElement('input');
+            dummyInput.value = photo.url;
+            document.body.appendChild(dummyInput);
+            dummyInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(dummyInput);
+            showToast('Đã sao chép đường dẫn bức ảnh!');
+        }
+
+        function openUploadModal() {
+            document.getElementById('uploadModal').classList.remove('hidden');
+        }
+
+        function closeUploadModal() {
+            document.getElementById('uploadModal').classList.add('hidden');
+            document.getElementById('uploadForm').reset();
+            document.getElementById('uploadPreviewContainer').classList.add('hidden');
+            uploadedDataUrl = '';
+        }
+
+        function previewUploadedFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                uploadedDataUrl = e.target.result;
+                document.getElementById('uploadPreviewImg').src = uploadedDataUrl;
+                document.getElementById('uploadPreviewContainer').classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function handleAddPhoto(event) {
+            event.preventDefault();
+            const urlInput = document.getElementById('photoUrlInput').value.trim();
+            const finalImageUrl = uploadedDataUrl || urlInput || 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1000&q=80';
+
+            const newPhoto = {
+                id: Date.now(),
+                title: document.getElementById('photoTitleInput').value.trim(),
+                category: document.getElementById('photoCategoryInput').value,
+                location: document.getElementById('photoLocationInput').value.trim() || 'Việt Nam',
+                date: 'Vừa xong',
+                url: finalImageUrl,
+                description: document.getElementById('photoDescInput').value.trim() || 'Khoảnh khắc đáng nhớ được lưu giữ trong bộ sưu tập cá nhân.',
+                camera: document.getElementById('photoCameraInput').value.trim() || 'Máy ảnh cá nhân',
+                lens: '35mm f/1.8',
+                settings: 'f/2.8 • 1/200s',
+                iso: 'ISO 100',
+                likes: 1,
+                liked: true
+            };
+
+            photos.unshift(newPhoto);
+            closeUploadModal();
+            renderGallery();
+            showToast('Đã thêm bức ảnh mới vào bộ sưu tập!');
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toastNotification');
+            document.getElementById('toastMessage').textContent = message;
+            toast.classList.remove('hidden');
+            toast.classList.add('flex');
+            setTimeout(() => {
+                toast.classList.add('hidden');
+                toast.classList.remove('flex');
+            }, 2800);
+        }
+
+        window.onload = function() {
+            // Sự kiện chọn bộ lọc danh mục
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    currentCategory = btn.getAttribute('data-category');
+                    updateCategoryButtons();
+                    renderGallery();
+                });
+            });
+
+            // Sự kiện tìm kiếm
+            const searchInput = document.getElementById('searchInput');
+            const mobileSearchInput = document.getElementById('mobileSearchInput');
+            const clearBtn = document.getElementById('clearSearchBtn');
+
+            function handleSearch(value) {
+                searchQuery = value;
+                clearBtn.classList.toggle('hidden', !value);
+                renderGallery();
+            }
+
+            searchInput.addEventListener('input', (e) => {
+                mobileSearchInput.value = e.target.value;
+                handleSearch(e.target.value);
+            });
+
+            mobileSearchInput.addEventListener('input', (e) => {
+                searchInput.value = e.target.value;
+                handleSearch(e.target.value);
+            });
+
+            clearBtn.addEventListener('click', () => {
+                searchInput.value = '';
+                mobileSearchInput.value = '';
+                handleSearch('');
+            });
+
+            // Phím tắt bàn phím cho Lightbox
+            document.addEventListener('keydown', (e) => {
+                const isLightboxOpen = !document.getElementById('lightboxModal').classList.contains('hidden');
+                if (!isLightboxOpen) return;
+
+                if (e.key === 'Escape') closeLightbox();
+                if (e.key === 'ArrowRight') navigateLightbox(1);
+                if (e.key === 'ArrowLeft') navigateLightbox(-1);
+            });
+
+            // Khởi chạy lần đầu
+            renderGallery();
+        };
+    </script>
+</body>
+</html>
